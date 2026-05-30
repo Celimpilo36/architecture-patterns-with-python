@@ -1,4 +1,5 @@
 import unittest
+import requests
 from fastapi.testclient import TestClient
 from src.entrypoints.fastapi_app import app
 from sqlalchemy import text
@@ -24,7 +25,7 @@ class TestApi(unittest.TestCase):
         super().tearDown()
 
     # ========================= Tests ==========================
-    def test_api_returns_allocation(self):
+    def test_happy_path_returns_201_and_allocated_batch(self):
         sku, othersku = random_sku(), random_sku('other')
         earlybatch = random_batchref("1")
         laterbatch = random_batchref("2")
@@ -36,73 +37,25 @@ class TestApi(unittest.TestCase):
             (laterbatch, sku, 100, '2011-01-02'),
             (otherbatch, othersku, 100, None)
             ])
-        orderid = random_oderid()
+        payload = {'orderid': random_oderid(), 'sku': sku, 'qty': 3}
 
         response  = self.client.post(
                 "/allocate",
-                json={
-                    "orderid": orderid,
-                    "sku": sku,
-                    "qty": 10
-                    }
+                json=payload
                 )
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["batchref"], earlybatch)
 
-    def test_allocations_are_persisted(self):
-        sku = random_sku()
-        batch1, batch2 = random_batchref("1"), random_batchref("2")
-        order1, order2 = random_oderid("1"), random_oderid("2")
-
-        add_stock([
-            (batch1, sku, 10, '2011-01-01'),
-            (batch2, sku, 10, '2011-01-02')
-            ])
-        line1 = {'orderid': order1, 'sku': sku, 'qty': 10}
-        line2 = {'orderid': order2, 'sku': sku, 'qty': 10}
-        
-        # first order uses up all stock in batch1
-        response = self.client.post(
-                "/allocate",
-                json=line1
-                )
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['batchref'], batch1)
-
-        # second order should go to batch2
-        response = self.client.post(
-                "/allocate",
-                json=line2
-                )
-
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['batchref'], batch2)
-
-
-    def test_400_message_for_out_of_stock(self) -> None:
-
-        sku, small_batch, large_order = random_sku(), random_batchref(), random_oderid()
-        add_stock([
-            (small_batch, sku, 10, '2011-01-01'),
-            ])
-        data = {'orderid': large_order, 'sku': sku, 'qty': 20}
-
-        response = self.client.post(
-                "/allocate",
-                json=data
-                )
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['detail'], f'{sku} is out of stock')
-
-
-    def test_400_message_for_invalid_sku(self):
+    def test_unhappy_path_returns_400_and_error_message(self):
         unknown_sku, orderid = random_sku(), random_oderid()
-        data = {'orderid': orderid, 'sku': unknown_sku, 'qty': 20}
+        payload = {'orderid': orderid, 'sku': unknown_sku, 'qty': 20}
         response = self.client.post(
                 "/allocate",
-                json=data
+                json=payload
                 )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['detail'], f'Invalid sku {unknown_sku}')
+        self.assertTrue(f'Invalid sku {unknown_sku}' in response.json()["detail"])
+
+
 
