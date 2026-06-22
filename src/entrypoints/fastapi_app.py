@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers.allocate_route import router
+from .routers.allocate import router
 from .routers.exceptions import invalid_sku_handler
 from src.service_layer.services import InvalidSku
 

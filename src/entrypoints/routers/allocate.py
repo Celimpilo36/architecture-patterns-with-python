@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from src.entrypoints import dependancies
-from ..schemas.allocatiom_schema import allocationRequest, allocationResponse
+from ..schemas.allocation import allocationRequest, allocationResponse
 from src.service_layer import services
 from src.adapters import repository
 from src.domain import model
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/allocate", tags=["allocate"])
 async def allocate_endpoint(order_line: allocationRequest, session: Session = Depends(dependancies.get_session)):
     repo = repository.SqlAlchemyRepository(session)
     try:
-        batch_ref = services.allocate(
+        batch_ref: str = services.allocate(
             order_line.orderid, order_line.sku, order_line.qty,
             repo, session
             )
