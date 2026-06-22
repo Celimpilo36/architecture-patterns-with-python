@@ -3,6 +3,11 @@ from src.adapters.repository import FakeRepository
 from src.service_layer import services
 import unittest
 
+class Fake_Repository(set):
+
+    @staticmethod
+    def for_batch(ref: str, sku: str, qty: int, eta=None):
+        return FakeRepository([Batch(ref,sku,qty,eta)])
 class FakeSession():
     committed = False
 
@@ -12,30 +17,26 @@ class FakeSession():
 class TestServices(unittest.TestCase):
 
     def test_returns_allocation(self):
-        line: OrderLine = OrderLine("01", "COMPLICATED-LAMP", 10)
-        batch: Batch = Batch("b1", "COMPLICATED-LAMP", 100, eta=None)
-        repo = FakeRepository([batch])
-        result = services.allocate(line.orderid,line.sku, line.qty, repo, FakeSession())
+       
+        repo = Fake_Repository.for_batch("b1", "COMPLICATED-LAMP", 100, eta=None)
+        result: str = services.allocate("01", "COMPLICATED-LAMP", 10, repo, FakeSession())
         
         self.assertEqual(result,"b1")
 
 
     def test_error_for_invalid_sku(self):
 
-        line = OrderLine("01", "NONEEXISTINGSKU",10)
-        batch = Batch("b1", "AREALSKU", 100, eta=None)
-        repo = FakeRepository([batch])
+        repo = Fake_Repository.for_batch("b1", "AREALSKU", 100, eta=None)
 
         with self.assertRaises(services.InvalidSku):
-            services.allocate(line.orderid, line.sku, line.qty, repo, FakeSession())
+            services.allocate("01", "NONEEXISTINGSKU",10, repo, FakeSession())
 
     def tesf_commits(self):
-        line = OrderLine("01", "OMINOUS-MIRROR",10)
-        batch = Batch("b1","OMINOUS-MIRROR", 100, eta=None)
-        repo = FakeRepository([batch])
+        
+        repo = Fake_Repository.for_batch("b1","OMINOUS-MIRROR", 100, eta=None)
 
         session = FakeSession()
 
-        services.allocate(line.orderid, line.sku, line.qty, repo, session)
+        services.allocate("01", "OMINOUS-MIRROR", 10, repo, session)
         self.assertTrue(session.committed)
 
