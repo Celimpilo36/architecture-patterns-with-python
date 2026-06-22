@@ -1,7 +1,9 @@
 from uuid import uuid4
-from sqlalchemy import text
-from src.entrypoints.fastapi_app import engine
+from sqlalchemy import text, create_engine
+from src.config import settings
 from sqlalchemy.orm import Session
+
+engine = create_engine(settings.database_url, echo=False)
 
 def get_session() -> Session:
     return Session(engine)

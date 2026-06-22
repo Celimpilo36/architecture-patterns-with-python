@@ -78,7 +78,7 @@ class TestRepository(unittest.TestCase):
         self.insert_allocations(batch_id, orderline_id)
 
         repo = repository.SqlAlchemyRepository(self.session)
-        retrieved: List[Batch] = repo.get("batch1")
+        retrieved: List[Batch] = [repo.get("batch1")]
 
         expected: List[Batch] = [Batch("batch1", "GENERIC-SOFA", 100, eta=None)]
         self.assertEqual(retrieved, expected)

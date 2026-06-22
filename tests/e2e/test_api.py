@@ -1,5 +1,4 @@
 import unittest
-import requests
 from fastapi.testclient import TestClient
 from src.entrypoints.fastapi_app import app
 from sqlalchemy import text
@@ -45,7 +44,7 @@ class TestApi(unittest.TestCase):
                 )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()["batchref"], earlybatch)
+        self.assertEqual(response.json()["batch_ref"], earlybatch)
 
     def test_unhappy_path_returns_400_and_error_message(self):
         unknown_sku, orderid = random_sku(), random_oderid()

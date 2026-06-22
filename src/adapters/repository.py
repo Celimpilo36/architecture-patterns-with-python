@@ -1,17 +1,21 @@
-from abc import ABC, abstractmethod
+import abc
 from src.domain.model import Batch
 from sqlalchemy.orm import Session
 from typing import List
 
 
-class AbstractRepository(ABC):
+class AbstractRepository(abc.ABC):
 
-    @abstractmethod
+    @abc.abstractmethod
     def add(self, batch: Batch) -> None:
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def get(self, reference) -> Batch:
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def list(self) -> list[Batch]:
         raise NotImplementedError
 
 
@@ -26,7 +30,7 @@ class SqlAlchemyRepository(AbstractRepository):
     def get(self, reference: str) -> Batch:
         return self.session.query(Batch).filter_by(reference=reference).one()
 
-    def list(self):
+    def list(self) -> list[Batch]:
         return self.session.query(Batch).all()
 
 
