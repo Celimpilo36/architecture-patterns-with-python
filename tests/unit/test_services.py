@@ -12,7 +12,7 @@ class FakeSession():
 class TestServices(unittest.TestCase):
 
     def test_returns_allocation(self):
-        line: OrderLine = OrderLine("01", "NONEEXISTINGSKU", 10)
+        line: OrderLine = OrderLine("01", "COMPLICATED-LAMP", 10)
         batch: Batch = Batch("b1", "COMPLICATED-LAMP", 100, eta=None)
         repo = FakeRepository([batch])
         result = services.allocate(line.orderid,line.sku, line.qty, repo, FakeSession())
