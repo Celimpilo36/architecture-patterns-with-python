@@ -3,11 +3,13 @@ from src.adapters.repository import FakeRepository
 from src.service_layer import services
 import unittest
 
-class Fake_Repository(set):
+class Fake_Repository():
 
     @staticmethod
     def for_batch(ref: str, sku: str, qty: int, eta=None):
         return FakeRepository([Batch(ref,sku,qty,eta)])
+    
+    
 class FakeSession():
     committed = False
 
@@ -32,11 +34,20 @@ class TestServices(unittest.TestCase):
             services.allocate("01", "NONEEXISTINGSKU",10, repo, FakeSession())
 
     def tesf_commits(self):
-        
+
         repo = Fake_Repository.for_batch("b1","OMINOUS-MIRROR", 100, eta=None)
 
         session = FakeSession()
 
         services.allocate("01", "OMINOUS-MIRROR", 10, repo, session)
         self.assertTrue(session.committed)
+
+
+    def test_add_batch(self):
+         repo, session = FakeRepository([]), FakeSession()
+
+         services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, repo, session) # type: ignore
+
+         self.assertNotEqual(repo.get("b1"), None)
+         self.assertTrue(session.committed)
 
