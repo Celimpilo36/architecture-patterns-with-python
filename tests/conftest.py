@@ -29,7 +29,7 @@ def get_allocated_batch_ref(session: Session, orderid: str, sku: str):
 
 def get_session_factory() -> sessionmaker[Session]:
     engine = create_engine("sqlite:///:memory:")
-    orm.start_mapper()
+    orm.start_mappers()
     orm.metadata.create_all(engine)
 
     return sessionmaker(bind=engine)

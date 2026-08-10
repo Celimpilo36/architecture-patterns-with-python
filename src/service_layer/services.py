@@ -1,5 +1,4 @@
 from src.domain import model
-from src.adapters.repository import AbstractRepository
 from typing import Optional
 from datetime import date
 
@@ -16,10 +15,13 @@ def is_invalid_sku(sku, batches):
     return sku in {b.sku for b in batches}
 
 
-def add_batch(ref:str, sku: str, qty: int, eta: Optional[date], repo: AbstractRepository, session) -> None:
-
-    repo.add(model.Batch(ref, sku, qty, eta))
-    session.commit()
+def add_batch(
+        ref:str, sku: str, qty: int, eta: Optional[date],
+        uow: unit_of_work.AbstractUnitOfWork
+              ) -> None:
+    with uow:
+        uow.batches.add(model.Batch(ref, sku, qty, eta))
+        uow.commit()
 
 
 def allocate(

@@ -30,7 +30,7 @@ allocations = Table(
 )
 
 
-def start_mapper():
+def start_mappers():
     mapper_registry.map_imperatively(
         OrderLine,
         order_lines

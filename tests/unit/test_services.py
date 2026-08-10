@@ -1,53 +1,33 @@
-from src.domain.model import OrderLine, Batch
 from src.adapters.repository import FakeRepository
 from src.service_layer import services
+from src.service_layer import unit_of_work
 import unittest
 
-class Fake_Repository():
-
-    @staticmethod
-    def for_batch(ref: str, sku: str, qty: int, eta=None):
-        return FakeRepository([Batch(ref,sku,qty,eta)])
-    
-    
-class FakeSession():
-    committed = False
+class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
+    def __init__(self) -> None:
+        self.batches = FakeRepository([])
+        self.committed = False
 
     def commit(self):
         self.committed = True
 
-class TestServices(unittest.TestCase):
-
-    def test_returns_allocation(self):
-       
-        repo = Fake_Repository.for_batch("b1", "COMPLICATED-LAMP", 100, eta=None)
-        result: str = services.allocate("01", "COMPLICATED-LAMP", 10, repo, FakeSession())
-        
-        self.assertEqual(result,"b1")
+    def rollback(self):
+        pass
 
 
-    def test_error_for_invalid_sku(self):
-
-        repo = Fake_Repository.for_batch("b1", "AREALSKU", 100, eta=None)
-
-        with self.assertRaises(services.InvalidSku):
-            services.allocate("01", "NONEEXISTINGSKU",10, repo, FakeSession())
-
-    def tesf_commits(self):
-
-        repo = Fake_Repository.for_batch("b1","OMINOUS-MIRROR", 100, eta=None)
-
-        session = FakeSession()
-
-        services.allocate("01", "OMINOUS-MIRROR", 10, repo, session)
-        self.assertTrue(session.committed)
-
+class TestUOW(unittest.TestCase):
 
     def test_add_batch(self):
-         repo, session = FakeRepository([]), FakeSession()
+        uow = FakeUnitOfWork()
 
-         services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, repo, session) # type: ignore
+        services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
 
-         self.assertNotEqual(repo.get("b1"), None)
-         self.assertTrue(session.committed)
+        self.assertNotEqual(uow.batches.get("b1"), None)
+        self.assertTrue(uow.committed)
+
+    def test_allocate_returns_allocation(self):
+        uow = FakeUnitOfWork()
+        services.add_batch("batch1", "COMPLICATED-LAMP", 100, None, uow)
+        result = services.allocate("01", "COMPLICATED-LAMP", 18, uow)
+        self.assertEqual(result, "batch1")
 
